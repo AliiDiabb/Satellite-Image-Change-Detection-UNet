@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Detection Prototype - 98.09% Accuracy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .accuracy-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .upload-box {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .upload-box:hover {
+            background: #e8f0ff;
+            border-color: #764ba2;
+            transform: translateY(-5px);
+        }
+
+        .upload-box.dragover {
+            background: #d4e6ff;
+            border-color: #4facfe;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .upload-box h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .upload-box p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.2em;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            display: inline-block;
+            margin: 20px auto;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .result-label {
+            padding: 15px;
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .stats-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .error-message {
+            background: #ffebee;
+            border-left: 5px solid #f44336;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .upload-section {
+                grid-template-columns: 1fr;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🛰️ Satellite Change Detection</h1>
+            <p>AI-Powered Building Change Detection using 2D-CNN (U-Net)</p>
+            <div class="accuracy-badge">
+                ✨ 98.09% Accuracy | 79.31% F1-Score | 65.72% IoU
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <!-- Before Image -->
+                <div class="upload-box" id="uploadBefore" onclick="document.getElementById('fileBefore').click()">
+                    <div class="upload-icon">📷</div>
+                    <h3>Before Image (Old)</h3>
+                    <p>Click or drag & drop to upload</p>
+                    <input type="file" id="fileBefore" accept="image/*" style="display: none;" onchange="handleFileSelect(event, 'before')">
+                    <img id="previewBefore" class="preview-img" style="display: none;">
+                </div>
+
+                <!-- After Image -->
+                <div class="upload-box" id="uploadAfter" onclick="document.getElementById('fileAfter').click()">
+                    <div class="upload-icon">📷</div>
+                    <h3>After Image (New)</h3>
+                    <p>Click or drag & drop to upload</p>
+                    <input type="file" id="fileAfter" accept="image/*" style="display: none;" onchange="handleFileSelect(event, 'after')">
+                    <img id="previewAfter" class="preview-img" style="display: none;">
+                </div>
+            </div>
+
+            <!-- Detect Button -->
+            <div class="button-container">
+                <button class="btn" id="detectBtn" onclick="detectChanges()" disabled>
+                    🔍 Detect Changes
+                </button>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <h3>Analyzing images...</h3>
+                <p>Please wait while our AI detects building changes</p>
+            </div>
+
+            <!-- Results -->
+            <div class="results" id="results">
+                <h2 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">
+                    🎯 Detection Results
+                </h2>
+
+                <!-- Stats -->
+                <div class="stats-section" id="statsSection">
+                    <h3 style="color: #2c3e50; margin-bottom: 20px; text-align: center;">
+                        📊 Analysis Statistics
+                    </h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statConfidence">-</div>
+                            <div class="stat-label">Max Confidence</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statChanged">-</div>
+                            <div class="stat-label">Changed Pixels</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statPercentage">-</div>
+                            <div class="stat-label">Change %</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Images -->
+                <div class="results-grid">
+                    <div class="result-card">
+                        <img id="resultBefore" alt="Before">
+                        <div class="result-label">Before (A)</div>
+                    </div>
+
+                    <div class="result-card">
+                        <img id="resultAfter" alt="After">
+                        <div class="result-label">After (B)</div>
+                    </div>
+
+                    <div class="result-card">
+                        <img id="resultPrediction" alt="Prediction">
+                        <div class="result-label">AI Prediction (Changes in White)</div>
+                    </div>
+
+                    <div class="result-card">
+                        <img id="resultOverlay" alt="Overlay">
+                        <div class="result-label">Overlay (Changes in Red)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let imageBeforeFile = null;
+        let imageAfterFile = null;
+
+        // Handle file selection
+        function handleFileSelect(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (type === 'before') {
+                    imageBeforeFile = file;
+                    document.getElementById('previewBefore').src = e.target.result;
+                    document.getElementById('previewBefore').style.display = 'block';
+                } else {
+                    imageAfterFile = file;
+                    document.getElementById('previewAfter').src = e.target.result;
+                    document.getElementById('previewAfter').style.display = 'block';
+                }
+
+                // Enable detect button if both images are uploaded
+                if (imageBeforeFile && imageAfterFile) {
+                    document.getElementById('detectBtn').disabled = false;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Drag and drop handlers
+        function setupDragDrop(elementId, inputId, type) {
+            const element = document.getElementById(elementId);
+
+            element.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                element.classList.add('dragover');
+            });
+
+            element.addEventListener('dragleave', () => {
+                element.classList.remove('dragover');
+            });
+
+            element.addEventListener('drop', (e) => {
+                e.preventDefault();
+                element.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const input = document.getElementById(inputId);
+                    input.files = files;
+                    handleFileSelect({target: input}, type);
+                }
+            });
+        }
+
+        setupDragDrop('uploadBefore', 'fileBefore', 'before');
+        setupDragDrop('uploadAfter', 'fileAfter', 'after');
+
+        // Detect changes
+        async function detectChanges() {
+            if (!imageBeforeFile || !imageAfterFile) {
+                showError('Please upload both images');
+                return;
+            }
+
+            // Hide error and results
+            document.getElementById('errorMessage').classList.remove('show');
+            document.getElementById('results').style.display = 'none';
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('detectBtn').disabled = true;
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('image_before', imageBeforeFile);
+            formData.append('image_after', imageAfterFile);
+
+            try {
+                const response = await fetch('/detect', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                showError('Error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('detectBtn').disabled = false;
+            }
+        }
+
+        // Display results
+        function displayResults(data) {
+            // Set images
+            document.getElementById('resultBefore').src = data.images.before;
+            document.getElementById('resultAfter').src = data.images.after;
+            document.getElementById('resultPrediction').src = data.images.prediction;
+            document.getElementById('resultOverlay').src = data.images.overlay;
+
+            // Set stats
+            document.getElementById('statConfidence').textContent = data.stats.confidence;
+            document.getElementById('statChanged').textContent = data.stats.changed_pixels.toLocaleString();
+            document.getElementById('statPercentage').textContent = data.stats.change_percentage;
+
+            // Show results
+            document.getElementById('results').style.display = 'block';
+
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+    </script>
+</body>
+</html>

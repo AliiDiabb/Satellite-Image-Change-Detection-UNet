@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 3: Model Training - Change Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect fill="rgba(255,255,255,0.05)" width="50" height="50"/><rect fill="rgba(255,255,255,0.05)" x="50" y="50" width="50" height="50"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .step-number {
+            font-size: 1.5em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            font-size: 1.4em;
+            opacity: 0.95;
+            margin-top: 10px;
+        }
+
+        .content {
+            padding: 50px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 4px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-icon {
+            font-size: 1.2em;
+        }
+
+        .intro-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            border-left: 6px solid #667eea;
+        }
+
+        .intro-box h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .intro-box p {
+            font-size: 1.2em;
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .workflow-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .workflow-step {
+            flex: 1;
+            min-width: 150px;
+            background: white;
+            padding: 30px 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-top: 5px solid;
+        }
+
+        .workflow-step:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .workflow-step.step-1 { border-top-color: #e74c3c; }
+        .workflow-step.step-2 { border-top-color: #3498db; }
+        .workflow-step.step-3 { border-top-color: #2ecc71; }
+        .workflow-step.step-4 { border-top-color: #f39c12; }
+        .workflow-step.step-5 { border-top-color: #9b59b6; }
+
+        .workflow-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .workflow-step h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .workflow-step p {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .workflow-arrow {
+            font-size: 2.5em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .architecture-box {
+            background: linear-gradient(135deg, #fff9e6 0%, #ffe6cc 100%);
+            padding: 40px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border-left: 6px solid #f39c12;
+        }
+
+        .architecture-box h3 {
+            color: #e67e22;
+            font-size: 2em;
+            margin-bottom: 25px;
+        }
+
+        .unet-diagram {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .unet-part {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .unet-part h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            text-align: center;
+        }
+
+        .unet-part ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .unet-part li {
+            padding: 8px 0;
+            color: #555;
+            border-bottom: 1px solid #eee;
+        }
+
+        .unet-part li:last-child {
+            border-bottom: none;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .config-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid;
+            transition: transform 0.2s;
+        }
+
+        .config-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .config-card.primary { border-left-color: #e74c3c; }
+        .config-card.secondary { border-left-color: #3498db; }
+        .config-card.tertiary { border-left-color: #2ecc71; }
+
+        .config-card h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .config-item:last-child {
+            border-bottom: none;
+        }
+
+        .config-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .config-value {
+            color: #e74c3c;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .metrics-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 40px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .metrics-section h3 {
+            color: #1565c0;
+            font-size: 2em;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .metric-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .metric-name {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .metric-description {
+            color: #888;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 30px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .timeline-item:nth-child(odd) {
+            flex-direction: row;
+        }
+
+        .timeline-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .timeline-content {
+            flex: 1;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: 0 30px;
+        }
+
+        .timeline-dot {
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid white;
+            box-shadow: 0 0 0 4px #667eea;
+        }
+
+        .timeline-content h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        .timeline-content p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .code-section {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            overflow-x: auto;
+        }
+
+        .code-header {
+            background: #21252b;
+            color: #61dafb;
+            padding: 15px 25px;
+            border-radius: 8px 8px 0 0;
+            margin: -30px -30px 20px -30px;
+            font-weight: bold;
+        }
+
+        .code-line {
+            padding: 5px 0;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+        }
+
+        .comment { color: #5c6370; }
+        .keyword { color: #c678dd; }
+        .string { color: #98c379; }
+        .number { color: #d19a66; }
+
+        .tips-box {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            padding: 35px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border-left: 6px solid #2ecc71;
+        }
+
+        .tips-box h3 {
+            color: #2e7d32;
+            font-size: 2em;
+            margin-bottom: 25px;
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .tip-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tip-card h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .tip-card p {
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe6aa 100%);
+            padding: 30px;
+            border-radius: 12px;
+            border-left: 6px solid #ffc107;
+            margin: 30px 0;
+        }
+
+        .warning-box h3 {
+            color: #856404;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .warning-box ul {
+            list-style: none;
+        }
+
+        .warning-box li {
+            padding: 10px 0;
+            color: #856404;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .warning-box li::before {
+            content: "⚠️";
+            font-size: 1.3em;
+        }
+
+        .results-showcase {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            padding: 40px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .results-showcase h3 {
+            color: #6a1b9a;
+            font-size: 2em;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .result-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #6a1b9a;
+            margin: 15px 0;
+        }
+
+        .result-label {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .result-description {
+            color: #888;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .footer h3 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .footer p {
+            opacity: 0.8;
+            margin: 10px 0;
+        }
+
+        .next-steps {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        .next-steps h3 {
+            font-size: 2.2em;
+            margin-bottom: 20px;
+        }
+
+        .next-steps p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .next-steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .next-step-card {
+            background: rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .next-step-card h4 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+
+            .workflow-container {
+                flex-direction: column;
+            }
+
+            .timeline::before {
+                left: 30px;
+            }
+
+            .timeline-item {
+                flex-direction: column !important;
+                padding-left: 60px;
+            }
+
+            .timeline-dot {
+                left: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <h1>🤖STEP 3: Model Training</h1>
+                <p>2D-CNN (U-Net) for Satellite Image Change Detection</p>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Introduction -->
+            <div class="intro-box">
+                <h2>What is Model Training?</h2>
+                <p>
+                    <strong>Model training</strong> is the process where the AI learns to detect building changes 
+                    by analyzing thousands of satellite image pairs. Think of it like teaching a student: 
+                    you show them many examples of "before" and "after" images with the correct answers 
+                    (ground truth masks), and over time, the student learns to identify changes on their own.
+                </p>
+                <p style="margin-top: 15px;">
+                    In this step, our <strong>2D-Convolutional Neural Network (U-Net)</strong> will learn from 
+                    <strong>447 training images</strong>, validate its learning with <strong>64 validation images</strong>, 
+                    and prove its knowledge on <strong>126 test images</strong> to achieve our target of <strong>70% accuracy</strong>.
+                </p>
+            </div>
+
+            <!-- Training Workflow -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">🔄</span>
+                    Training Workflow
+                </h2>
+
+                <div class="workflow-container">
+                    <div class="workflow-step step-1">
+                        <div class="workflow-icon">📥</div>
+                        <h3>Load Data</h3>
+                        <p>Load preprocessed images from train/val/test folders</p>
+                    </div>
+
+                    <div class="workflow-arrow">→</div>
+
+                    <div class="workflow-step step-2">
+                        <div class="workflow-icon">🏗️</div>
+                        <h3>Build Model</h3>
+                        <p>Create U-Net architecture with encoder-decoder</p>
+                    </div>
+
+                    <div class="workflow-arrow">→</div>
+
+                    <div class="workflow-step step-3">
+                        <div class="workflow-icon">🎓</div>
+                        <h3>Train</h3>
+                        <p>Learn from 447 training images over 50 epochs</p>
+                    </div>
+
+                    <div class="workflow-arrow">→</div>
+
+                    <div class="workflow-step step-4">
+                        <div class="workflow-icon">✅</div>
+                        <h3>Validate</h3>
+                        <p>Check performance on 64 validation images</p>
+                    </div>
+
+                    <div class="workflow-arrow">→</div>
+
+                    <div class="workflow-step step-5">
+                        <div class="workflow-icon">🎯</div>
+                        <h3>Test</h3>
+                        <p>Final evaluation on 126 test images</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- U-Net Architecture -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">🧠</span>
+                    U-Net Architecture (2D-CNN)
+                </h2>
+
+                <div class="architecture-box">
+                    <h3>Why U-Net for Change Detection?</h3>
+                    <p style="color: #666; font-size: 1.1em; line-height: 1.8; margin-bottom: 20px;">
+                        U-Net is a special type of Convolutional Neural Network designed for <strong>pixel-level predictions</strong>. 
+                        It's perfect for our task because it can identify exactly which pixels changed (new buildings) 
+                        while preserving spatial information through skip connections.
+                    </p>
+
+                    <div class="unet-diagram">
+                        <div class="unet-part" style="border-top: 5px solid #e74c3c;">
+                            <h4>📉 Encoder (Downsampling)</h4>
+                            <ul>
+                                <li><strong>Block 1:</strong> 64 filters</li>
+                                <li><strong>Block 2:</strong> 128 filters</li>
+                                <li><strong>Block 3:</strong> 256 filters</li>
+                                <li><strong>Block 4:</strong> 512 filters</li>
+                                <li><strong>Purpose:</strong> Extract features</li>
+                            </ul>
+                        </div>
+
+                        <div class="unet-part" style="border-top: 5px solid #f39c12;">
+                            <h4>🔥 Bottleneck</h4>
+                            <ul>
+                                <li><strong>Filters:</strong> 1024</li>
+                                <li><strong>Size:</strong> 16×16 (compressed)</li>
+                                <li><strong>Purpose:</strong> Deep understanding</li>
+                                <li><strong>Function:</strong> Learns abstract patterns</li>
+                            </ul>
+                        </div>
+
+                        <div class="unet-part" style="border-top: 5px solid #2ecc71;">
+                            <h4>📈 Decoder (Upsampling)</h4>
+                            <ul>
+                                <li><strong>Block 1:</strong> 512 filters + skip</li>
+                                <li><strong>Block 2:</strong> 256 filters + skip</li>
+                                <li><strong>Block 3:</strong> 128 filters + skip</li>
+                                <li><strong>Block 4:</strong> 64 filters + skip</li>
+                                <li><strong>Output:</strong> 256×256 mask</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Configuration -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">⚙️</span>
+                    Training Configuration
+                </h2>
+
+                <div class="config-grid">
+                    <div class="config-card primary">
+                        <h4>📊 Data Parameters</h4>
+                        <div class="config-item">
+                            <span class="config-label">Image Size</span>
+                            <span class="config-value">256×256</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Input Channels</span>
+                            <span class="config-value">6 (RGB+RGB)</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Output Channels</span>
+                            <span class="config-value">1 (Binary mask)</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Training Images</span>
+                            <span class="config-value">447</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Validation Images</span>
+                            <span class="config-value">64</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Test Images</span>
+                            <span class="config-value">126</span>
+                        </div>
+                    </div>
+
+                    <div class="config-card secondary">
+                        <h4>🎯 Training Parameters</h4>
+                        <div class="config-item">
+                            <span class="config-label">Batch Size</span>
+                            <span class="config-value">2</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Epochs</span>
+                            <span class="config-value">50</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Learning Rate</span>
+                            <span class="config-value">0.001</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Optimizer</span>
+                            <span class="config-value">Adam</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Loss Function</span>
+                            <span class="config-value">Binary Crossentropy</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">GPU</span>
+                            <span class="config-value">RTX 2050 4GB</span>
+                        </div>
+                    </div>
+
+                    <div class="config-card tertiary">
+                        <h4>🔧 Advanced Settings</h4>
+                        <div class="config-item">
+                            <span class="config-label">Data Augmentation</span>
+                            <span class="config-value">Enabled</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Early Stopping</span>
+                            <span class="config-value">15 epochs</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">LR Reduction</span>
+                            <span class="config-value">5 epochs</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Save Best Model</span>
+                            <span class="config-value">Yes</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-label">Save Weights</span>
+                            <span class="config-value">Yes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Metrics -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">📊</span>
+                    Evaluation Metrics
+                </h2>
+
+                <div class="metrics-section">
+                    <h3>How We Measure Performance</h3>
+                    <p style="text-align: center; color: #1565c0; font-size: 1.1em; margin-bottom: 20px;">
+                        Our model is evaluated using multiple metrics to ensure comprehensive performance assessment
+                    </p>
+
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">🎯</div>
+                            <div class="metric-name">Accuracy</div>
+                            <div class="metric-description">
+                                Percentage of correctly classified pixels (changed vs unchanged)
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">🔍</div>
+                            <div class="metric-name">Precision</div>
+                            <div class="metric-description">
+                                Of all predicted changes, how many were actually changes?
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">📡</div>
+                            <div class="metric-name">Recall</div>
+                            <div class="metric-description">
+                                Of all actual changes, how many did we detect?
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">⚖️</div>
+                            <div class="metric-name">F1-Score</div>
+                            <div class="metric-description">
+                                Harmonic mean of precision and recall (balanced measure)
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">🔲</div>
+                            <div class="metric-name">IoU</div>
+                            <div class="metric-description">
+                                Intersection over Union - overlap between prediction and ground truth
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">🎲</div>
+                            <div class="metric-name">Dice Coefficient</div>
+                            <div class="metric-description">
+                                Similar to IoU, measures similarity between prediction and truth
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Timeline -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">⏱️</span>
+                    Training Timeline (RTX 2050 4GB)
+                </h2>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>🚀 Start Training (Epoch 1-10)</h4>
+                            <p>
+                                <strong>Time:</strong> ~100-120 minutes<br>
+                                <strong>What happens:</strong> Model learns basic patterns, accuracy starts at ~50-60% and rapidly improves.<br>
+                                <strong>Expected accuracy:</strong> ~65-70%
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>📈 Improvement Phase (Epoch 11-30)</h4>
+                            <p>
+                                <strong>Time:</strong> ~200-240 minutes<br>
+                                <strong>What happens:</strong> Model refines understanding, learns complex building patterns.<br>
+                                <strong>Expected accuracy:</strong> ~70-75%
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>🎯 Fine-tuning (Epoch 31-50)</h4>
+                            <p>
+                                <strong>Time:</strong> ~200-240 minutes<br>
+                                <strong>What happens:</strong> Model perfects details, may trigger early stopping if no improvement.<br>
+                                <strong>Expected accuracy:</strong> ~70-95%
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>✅ Training Complete</h4>
+                            <p>
+                                <strong>Total time:</strong> ~6-10 hours<br>
+                                <strong>Result:</strong> Best model saved, weights extracted, ready for testing.<br>
+                                <strong>Final accuracy:</strong> <strong>70-95%</strong> (target achieved! ✓)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code Example -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">💻</span>
+                    Running the Training Script
+                </h2>
+
+                <div class="code-section">
+                    <div class="code-header">🐍 Command Line</div>
+                    <div class="code-line"><span class="comment"># Navigate to your project folder</span></div>
+                    <div class="code-line"><span class="keyword">cd</span> <span class="string">C:\Users\diaba\Desktop\YourProject</span></div>
+                    <div class="code-line"></div>
+                    <div class="code-line"><span class="comment"># Activate conda environment (if using)</span></div>
+                    <div class="code-line"><span class="keyword">conda activate</span> <span class="string">Theses</span></div>
+                    <div class="code-line"></div>
+                    <div class="code-line"><span class="comment"># Run training script</span></div>
+                    <div class="code-line"><span class="keyword">python</span> <span class="string">train_change_detection_modified.py</span></div>
+                    <div class="code-line"></div>
+                    <div class="code-line"><span class="comment"># Training will start and show progress:</span></div>
+                    <div class="code-line"><span class="string">Epoch 1/50</span></div>
+                    <div class="code-line"><span class="string">56/56 [==============================] - 45s 2s/step</span></div>
+                    <div class="code-line"><span class="string">loss: 0.3456 - accuracy: 0.8234 - val_accuracy: 0.7456</span></div>
+                </div>
+            </div>
+
+            <!-- Expected Results -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">🏆</span>
+                    Expected Results
+                </h2>
+
+                <div class="results-showcase">
+                    <h3>Target Performance Metrics</h3>
+
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Accuracy</div>
+                            <div class="result-value">72-78%</div>
+                            <div class="result-description">Exceeds 70% target requirement</div>
+                        </div>
+
+                        <div class="result-card">
+                            <div class="result-label">IoU Score</div>
+                            <div class="result-value">55-65%</div>
+                            <div class="result-description">Good overlap with ground truth</div>
+                        </div>
+
+                        <div class="result-card">
+                            <div class="result-label">F1-Score</div>
+                            <div class="result-value">68-75%</div>
+                            <div class="result-description">Balanced precision and recall</div>
+                        </div>
+
+                        <div class="result-card">
+                            <div class="result-label">Training Time</div>
+                            <div class="result-value">6-10h</div>
+                            <div class="result-description">On RTX 2050 4GB GPU</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Output Files -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">📁</span>
+                    Generated Output Files
+                </h2>
+
+                <div class="architecture-box">
+                    <h3>What Gets Saved After Training</h3>
+                    <div style="margin-top: 20px;">
+                        <div class="config-item" style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            <span class="config-label">📦 models/unet_change_detection_best_weights.h5</span>
+                            <span style="color: #666;">Best model weights (during training)</span>
+                        </div>
+                        <div class="config-item" style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            <span class="config-label">💾 models/unet_change_detection_final_weights.h5</span>
+                            <span style="color: #666;">Final weights (after completion)</span>
+                        </div>
+                        <div class="config-item" style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            <span class="config-label">🤖 models/unet_change_detection_final_model.h5</span>
+                            <span style="color: #666;">Complete model (architecture + weights)</span>
+                        </div>
+                        <div class="config-item" style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            <span class="config-label">📊 outputs/training_history.png</span>
+                            <span style="color: #666;">Loss and accuracy curves</span>
+                        </div>
+                        <div class="config-item" style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            <span class="config-label">🖼️ outputs/predictions_visualization.png</span>
+                            <span style="color: #666;">Sample predictions vs ground truth</span>
+                        </div>
+                        <div class="config-item" style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            <span class="config-label">📄 outputs/test_results.json</span>
+                            <span style="color: #666;">Detailed metrics in JSON format</span>
+                        </div>
+                        <div class="config-item" style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            <span class="config-label">📈 logs/unet_change_detection_training.csv</span>
+                            <span style="color: #666;">Complete training log</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips and Best Practices -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">💡</span>
+                    Tips for Successful Training
+                </h2>
+
+                <div class="tips-box">
+                    <h3>Best Practices</h3>
+
+                    <div class="tips-grid">
+                        <div class="tip-card">
+                            <h4>🔌 Keep Power Connected</h4>
+                            <p>Training takes 6-10 hours. Keep your laptop plugged in and prevent sleep mode.</p>
+                        </div>
+
+                        <div class="tip-card">
+                            <h4>🌡️ Monitor GPU Temperature</h4>
+                            <p>Use <code>nvidia-smi</code> to check GPU usage. Ensure good ventilation.</p>
+                        </div>
+
+                        <div class="tip-card">
+                            <h4>💾 Close Other Programs</h4>
+                            <p>Close browsers, games, and heavy applications to maximize GPU memory.</p>
+                        </div>
+
+                        <div class="tip-card">
+                            <h4>📊 Check Progress Regularly</h4>
+                            <p>Monitor validation accuracy. If it plateaus, early stopping will activate.</p>
+                        </div>
+
+                        <div class="tip-card">
+                            <h4>🔄 Use Overnight Training</h4>
+                            <p>Start training before bed, check results in the morning.</p>
+                        </div>
+
+                        <div class="tip-card">
+                            <h4>💿 Backup Your Work</h4>
+                            <p>Save preprocessed data and training scripts to cloud storage.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Troubleshooting -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">⚠️</span>
+                    Troubleshooting Common Issues
+                </h2>
+
+                <div class="warning-box">
+                    <h3>Common Problems & Solutions</h3>
+                    <ul>
+                        <li>
+                            <strong>Out of Memory Error:</strong> Reduce BATCH_SIZE from 8 to 4 or even 2 in Config class
+                        </li>
+                        <li>
+                            <strong>Training Very Slow:</strong> Check if GPU is being used with <code>nvidia-smi</code> command
+                        </li>
+                        <li>
+                            <strong>Accuracy Stuck Below 70%:</strong> Train for more epochs (increase EPOCHS to 100)
+                        </li>
+                        <li>
+                            <strong>Model Not Improving:</strong> Check if validation loss is decreasing. May need to adjust learning rate
+                        </li>
+                        <li>
+                            <strong>File Not Found Error:</strong> Verify DATA_PATH points to correct preprocessed folder
+                        </li>
+                        <li>
+                            <strong>GPU Not Detected:</strong> Ensure CUDA and cuDNN are properly installed for TensorFlow 2.10
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="next-steps">
+                <h3>🎉 After Training Completes</h3>
+                <p>Once your model achieves 70%+ accuracy, you can proceed to:</p>
+
+                <div class="next-steps-grid">
+                    <div class="next-step-card">
+                        <h4>📊 Analyze Results</h4>
+                        <p>Review training curves and test metrics</p>
+                    </div>
+
+                    <div class="next-step-card">
+                        <h4>🖼️ Visualize Predictions</h4>
+                        <p>Examine prediction vs ground truth images</p>
+                    </div>
+
+                    <div class="next-step-card">
+                        <h4>📝 Document Findings</h4>
+                        <p>Prepare results for thesis report</p>
+                    </div>
+
+                    <div class="next-step-card">
+                        <h4>🚀 Deploy Model</h4>
+                        <p>Use trained model for new predictions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <h3>🎓 Change Detection Training Complete</h3>
+            <p>Step 3: 2D-CNN Model Training for Satellite Image Analysis</p>
+            <p style="margin-top: 20px; font-size: 0.9em;">
+                Target: 70%+ Accuracy | Architecture: U-Net | Dataset: LEVIR-CD
+            </p>
+        </div>
+    </div>
+</body>
+</html>
