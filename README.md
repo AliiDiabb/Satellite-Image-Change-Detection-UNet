@@ -45,6 +45,7 @@ An end-to-end deep learning framework and interactive web prototype for detectin
 │   └── Step 3.html
 │
 └── requirements.txt                        # Python dependencies
+```
 
 
 🚀 How to Run
@@ -55,24 +56,25 @@ Run Step 1 PreProcessing.py inside the Training folder to preprocess the dataset
 
 Run Step 2 Training.py to train the U-Net model and save the weights.
 
-Bash
+```Bash
 cd Training
 python "Step 1 PreProcessing.py"
 python "Step 2 Training.py"
 2. Running the Web Application
 To run the web interface:
+```
 
 Ensure the trained model weights (.h5 file) are placed inside Website steps/Project/models/.
 
 Run app.py inside the Website steps/Project/ directory.
 
-Bash
+```Bash
 cd "Website steps/Project"
 python app.py
 Then open http://localhost:5000 in your web browser.
+```
 
-📜 License & Citation
-This project is open-source under the MIT License.
+
 
 Dataset: LEVIR-CD Dataset (Chen et al.)
 
